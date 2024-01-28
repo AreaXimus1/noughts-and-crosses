@@ -6,6 +6,18 @@ COLUMNS = ["a", "b", "c"]
 
 # where the player decides if they want to be noughts or crosses
 def noughts_or_crosses():
+    '''
+    The player decides if they're noughts or crosses if they're playing in
+    multiplayer.
+    '''
+
+    VALID_NOUGHTS_ANSWERS = [
+        "noughts", "naughts", "nought", "naught", "n", "o", "0"
+    ]
+    VALID_CROSSES_ANSWERS = [
+        "crosses", "cross", "cross's", "c", "x"
+    ]
+
     o_or_x_input = input(
         "\n"
         "Do you want to be noughts or crosses?\n"
@@ -13,9 +25,9 @@ def noughts_or_crosses():
         "> "
     ).lower()
 
-    if o_or_x_input == "noughts" or o_or_x_input == "nought":
+    if o_or_x_input in VALID_NOUGHTS_ANSWERS:
         nought_or_cross = 1
-    elif o_or_x_input == "crosses" or o_or_x_input == "cross":
+    elif o_or_x_input in VALID_CROSSES_ANSWERS:
         nought_or_cross = 4
     else:
         print("Please enter a valid input")
@@ -25,8 +37,15 @@ def noughts_or_crosses():
 
 # prints the contents of the array as text-format
 def print_array(board_array):
+    '''
+    Turns the array into a printable board format that is seen by the player.
+    '''
 
-    cell_base = "  -  "  # default cell format
+    # board templates
+    TOP_BOTTOM_ROW = "       |     |     "
+    MID_ROW = "  _____|_____|_____\n       |     |     "
+    CELL_BASE = "  -  "  # the "-" is replaced depending on symbol
+
     final_cell_list = []
 
     counter = 0
@@ -40,26 +59,24 @@ def print_array(board_array):
         counter += 1
 
         if board_array[row][column] == 0:
-            cell = cell_base.replace("-", " ")
+            cell = CELL_BASE.replace("-", " ")
         elif board_array[row][column] == 1:
-            cell = cell_base.replace("-", "O")
+            cell = CELL_BASE.replace("-", "O")
         else:
-            cell = cell_base.replace("-", "X")
+            cell = CELL_BASE.replace("-", "X")
 
         final_cell_list.append(cell)
 
     #  assembling the printable board
-    top_bottom_row = "       |     |     "
-    mid_row = "  _____|_____|_____\n       |     |     "
     board_print = (
         f"    a     b     c  "
-        f"\n{top_bottom_row}\n"
+        f"\n{TOP_BOTTOM_ROW}\n"
         f"1 {final_cell_list[0]}|{final_cell_list[1]}|{final_cell_list[2]}"
-        f"\n{mid_row}\n"
+        f"\n{MID_ROW}\n"
         f"2 {final_cell_list[3]}|{final_cell_list[4]}|{final_cell_list[5]}"
-        f"\n{mid_row}\n"
+        f"\n{MID_ROW}\n"
         f"3 {final_cell_list[6]}|{final_cell_list[7]}|{final_cell_list[8]}"
-        f"\n{top_bottom_row}"
+        f"\n{TOP_BOTTOM_ROW}"
     )
     print(board_print)
 
@@ -70,14 +87,22 @@ def human_cell_chooser(board_array, player_character):
     It then calls the update array function to place the mark on the board.
     '''
 
+    if player_character == 1:
+        player_symbol = "NOUGHTS"
+    else:
+        player_symbol = "CROSSES"
+
     inputted_cell = input(
-        "Which cell do you want to put your mark in? Example: b3\n> ")
+        f"{player_symbol}: which cell do you want to put your mark in? Example: b3\n> "
+    ).lower()
 
     xn = inputted_cell.strip().lower()
     xn_split = [x for x in xn]
 
     if len(xn_split) > 2:  # seeing if user has inputted more than two characters
-        return human_cell_chooser(input("Please input only two characters\n> "))
+        return human_cell_chooser(
+            input("Please input only two characters\n> ").lower()
+        )
 
     column = xn_split[0]
     if column == "a":
@@ -87,14 +112,20 @@ def human_cell_chooser(board_array, player_character):
     elif column == "c":
         column = 2
     else:  # if first character is anything except a, b, or c
-        return human_cell_chooser(input("Please input a valid column letter (a, b, c)\n> "))
+        return human_cell_chooser(
+            input("Please input a valid column letter (a, b, c)\n> ").lower()
+        )
 
     try:
         row = int(xn_split[1]) - 1
         if row > 2:  # seeing if number is below 3
-            return human_cell_chooser(input("Please input a valid row number (1, 2, 3)\n> "))
+            return human_cell_chooser(
+                input("Please input a valid row number (1, 2, 3)\n> ").lower()
+            )
     except ValueError:  # seeing if second character is a number
-        return human_cell_chooser(input("Please input a valid row number (1, 2, 3)\n> "))
+        return human_cell_chooser(
+            input("Please input a valid row number (1, 2, 3)\n> ").lower()
+        )
 
     coord = (row, column)
 
@@ -103,8 +134,11 @@ def human_cell_chooser(board_array, player_character):
 
 # updates the controller array from input provided by the user
 def update_array(board_array, coord, player_character, human=True):
+    '''
+    Updates the array. Based on either AI or human moves.
+    '''
 
-    if human == True:
+    if human:
 
         if board_array[coord[0]][coord[1]] != 0:
             print("You can only select an empty cell!")
@@ -129,15 +163,10 @@ def update_array(board_array, coord, player_character, human=True):
 # the column
 def two_in_row_detector(board_array):
     '''
-    Output is a tuple which looks like (x, y, row, column).
+    Output is a tuple of coordinates (row, column).
 
-    x is what type of two in a row it is. If it's a row, x=0 -- column = 1,
-    diagonal L-R (down and right) = 2, diagonal R-L = 3
-
-    y is which character has the two in a row. Noughts = 1, Crosses = 4
-
-    Row/column is the free slot (i.e. 0 on the array)
-
+    This coordinate is the empty one in the row/column/diagonal that has two
+    marks of the same type in it already.
     '''
 
     # finds the coordinate of the empty cell in a two-in-a-row
@@ -223,28 +252,28 @@ def ai_go(board_array, player_character):
             )
 
 
-def three_in_row_detector(board_array):
+def game_end_detector(board_array, player_character, player, multiplayer):
     '''
-    True if there is a three in a row, False if not. 
+    Returns False if the game should stop, and True if it should continue
+    This is decided on whether there is a three-in-a-row or draw or not.
+    Different end-game messages depending on whether single or multiplayer.
     '''
+
+    game_end = False
 
     # column three in a row
     count = 0
     for col in board_array.T:
-        if np.sum(col) == 3:
-            return True
-        elif np.sum(col) == 12:
-            return True
+        if np.sum(col) == 3 or np.sum(col) == 12:
+            game_end = True
         else:
             count += 1
 
     # row three in a row
     count = 0
     for row in board_array:
-        if np.sum(row) == 3:
-            return True
-        elif np.sum(row) == 12:
-            return True
+        if np.sum(row) == 3 or np.sum(row) == 12:
+            game_end = True
         else:
             count += 1
 
@@ -256,14 +285,7 @@ def three_in_row_detector(board_array):
         board_array[0][2] + board_array[1][1] + board_array[2][0] == 3 or
         board_array[0][2] + board_array[1][1] + board_array[2][0] == 12
     ):
-        return True
-
-    return False
-
-
-def game_end_detector(board_array, player_character, player):
-    '''Returns False if the game should stop, and True if it should continue'''
-    game_end = three_in_row_detector(board_array)
+        game_end = True
 
     if np.sum(board_array) == 21:
         print("It's a draw.")
@@ -272,24 +294,59 @@ def game_end_detector(board_array, player_character, player):
     if not game_end:
         return True
     else:
-        if player:
-            if player_character == 1:
-                print("Noughts win! Congratulations!")
+        if multiplayer:
+            if player:
+                if player_character == 1:
+                    print("Noughts win! Congratulations!")
+                else:
+                    print("Crosses win! Congratulations!")
             else:
-                print("Crosses win! Congratulations!")
+                if player_character == 1:
+                    print("Sorry, Crosses win.")
+                else:
+                    print("Sorry, Noughts win.")
+            return False
         else:
             if player_character == 1:
-                print("Sorry, Crosses win.")
+                print("Noughts win!")
             else:
-                print("Sorry, Noughts win.")
-        return False
+                print("Crosses win!")
+
+
+VALID_YES_ANSWERS = ["yes", "y", "ye", "yess"]
+VALID_NO_ANSWERS = ["no", "n", "noo", ]
+VALID_SP_ANSWERS = [
+    "sp", "singleplayer", "single player", "single-player", "spp", "ssp",
+    "sspp"
+]
+VALID_MP_ANSWERS = [
+    "mp", "multiplayer", "multi player", "multi-player", "mpp", "mmp",
+    "mmpp"
+]
 
 
 game_on = True
 
 print("Welcome to Noughts and Crosses!")
 
-while game_on:
+valid_response = False
+while not valid_response:
+    single_or_multi = input(
+        "Do you want to play in singleplayer or multiplayer? sp/mp\n> "
+    ).lower()
+    if single_or_multi in VALID_SP_ANSWERS:
+        singleplayer = True
+        valid_response = True
+    elif single_or_multi in VALID_MP_ANSWERS:
+        singleplayer = False
+        valid_response = True
+    else:
+        print(single_or_multi)
+    # else repeat loop
+
+
+# SINGLEPLAYER
+while game_on and singleplayer:
 
     board_array = np.array([
         [0, 0, 0],
@@ -310,20 +367,61 @@ while game_on:
 
         human_cell_chooser(board_array, player_character)
         game_running = game_end_detector(
-            board_array, player_character, player=True)
+            board_array, player_character, player=True, multiplayer=True
+        )
 
         if game_running:
             ai_go(board_array, player_character)
             game_running = game_end_detector(
-                board_array, player_character, player=False)
+                board_array, player_character, player=False, multiplayer=True
+            )
 
     valid_response = False
     while not valid_response:
-        play_again = input("Do you want to play again? y/n\n> ")
-        if play_again == "y":
+        play_again = input("Do you want to play again? y/n\n> ").lower()
+        if play_again in VALID_YES_ANSWERS:
             game_on = True
             valid_response = True
-        elif play_again == "n":
+        elif play_again in VALID_NO_ANSWERS:
+            print("Thank you for playing!")
+            game_on = False
+            valid_response = True
+        else:
+            valid_response = False
+
+
+# MULTIPLAYER
+while game_on and not singleplayer:
+
+    board_array = np.array([
+        [0, 0, 0],
+        [0, 0, 0],
+        [0, 0, 0]
+    ])
+
+    game_running = True
+
+    while game_running:
+
+        human_cell_chooser(board_array, player_character=1)
+        game_running = game_end_detector(
+            board_array, player_character=1, player=True, multiplayer=False
+        )
+
+        if game_running:
+            human_cell_chooser(board_array, player_character=4)
+            game_running = game_end_detector(
+                board_array, player_character=4, player=True,
+                multiplayer=False
+            )
+
+    valid_response = False
+    while not valid_response:
+        play_again = input("Do you want to play again? y/n\n> ").lower()
+        if play_again in VALID_YES_ANSWERS:
+            game_on = True
+            valid_response = True
+        elif play_again in VALID_NO_ANSWERS:
             print("Thank you for playing!")
             game_on = False
             valid_response = True
